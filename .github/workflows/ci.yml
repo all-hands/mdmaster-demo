@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GHC_VERSION: "9.10.3"
+  CABAL_VERSION: "3.16.1.0"
+
+jobs:
+  test:
+    name: Build and test (GHC 9.10.3)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the demo's generated samples
+        run: python3 scripts/make_demo_docx.py --check
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config zlib1g-dev
+
+      - name: Set up GHC and cabal
+        id: setup
+        uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
+        with:
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
+          cabal-update: true
+
+      - name: Locate the cabal store
+        id: store
+        run: echo "dir=$(cabal path --store-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore dependency cache
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.store.outputs.dir }}
+          key: cabal-store-${{ runner.os }}-ghc${{ env.GHC_VERSION }}-${{ hashFiles('cabal.project', 'cabal.project.freeze') }}
+          restore-keys: |
+            cabal-store-${{ runner.os }}-ghc${{ env.GHC_VERSION }}-
+
+      - name: Build dependencies
+        run: cabal build all --only-dependencies --with-compiler=ghc-${{ env.GHC_VERSION }}
+
+      - name: Save dependency cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.store.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Build
+        run: cabal build all --with-compiler=ghc-${{ env.GHC_VERSION }}
+
+      - name: Test
+        run: cabal test all --with-compiler=ghc-${{ env.GHC_VERSION }} --test-show-details=direct
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: mdmaster-demo:ci
+
+      - name: Run container and wait for /healthz
+        run: |
+          docker run -d --name mdmaster-demo-ci -p 8965:8965 mdmaster-demo:ci
+          status=000
+          for i in $(seq 1 60); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8965/healthz || true)
+            if [ "$status" = "200" ]; then
+              echo "healthz returned 200 after ${i}s"
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' mdmaster-demo-ci)" != "true" ]; then
+              echo "container exited early"
+              break
+            fi
+            sleep 1
+          done
+          echo "healthz did not return 200 (last status: ${status})"
+          exit 1
+
+      - name: Container logs
+        if: always()
+        run: docker logs mdmaster-demo-ci || true
+
+      - name: Stop container
+        if: always()
+        run: docker stop -t 35 mdmaster-demo-ci || true

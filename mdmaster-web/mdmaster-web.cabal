@@ -1,0 +1,136 @@
+cabal-version:      2.4
+name:               mdmaster-web
+version:            0.0.5
+synopsis:           mdmaster HTTP server
+license:            GPL-2.0-or-later
+build-type:         Simple
+
+data-dir:   static
+data-files: htmx.min.js
+            app.js
+            app.css
+            favicon.svg
+            demo/**/*.md
+            demo/**/*.docx
+extra-source-files: static/htmx.min.js
+                    static/app.js
+                    static/app.css
+                    static/favicon.svg
+                    static/demo/**/*.md
+                    static/demo/**/*.docx
+                    test/fixtures/comments.docx
+
+common warnings
+    default-language: Haskell2010
+    default-extensions: OverloadedStrings
+
+library
+    import:           warnings
+    hs-source-dirs:   src
+    exposed-modules:  Mdmaster.Web.Api
+                      Mdmaster.Web.Config
+                      Mdmaster.Web.Demo
+                      Mdmaster.Web.Handlers
+                      Mdmaster.Web.Headers
+                      Mdmaster.Web.Identity
+                      Mdmaster.Web.Limits
+                      Mdmaster.Web.Log
+                      Mdmaster.Web.RunGate
+                      Mdmaster.Web.Server
+                      Mdmaster.Web.Upload
+                      Mdmaster.Web.View.Demo
+                      Mdmaster.Web.View.Diff
+                      Mdmaster.Web.View.DiffContext
+                      Mdmaster.Web.View.Form
+                      Mdmaster.Web.View.Layout
+                      Mdmaster.Web.View.Results
+    build-depends:    base
+                    , bytestring
+                    , containers
+                    , directory      >=1.3  && <1.4
+                    , crypton        >=1.0  && <2.4
+                    , deepseq
+                    , text
+                    , time
+                    , unix
+                    , filepath       >=1.4  && <1.6
+                    , http-types     >=0.12 && <0.13
+                    , network-uri    >=2.6  && <2.7
+                    , wai            >=3.2  && <3.3
+                    , wai-extra      >=3.1.15 && <3.2
+                    , wai-app-static >=3.1  && <3.3
+                    -- SECURITY: keep this floor. 3.4.17 fixes HSEC-2026-0013 (HTTP
+                    -- request smuggling behind a proxy), the deployment this app documents.
+                    , warp           >=3.4.17 && <3.5
+                    , servant        >=0.20 && <0.21
+                    , servant-server >=0.20 && <0.21
+                    , servant-lucid  >=0.9  && <0.10
+                    , lucid          >=2.11 && <2.12
+                    , mdmaster-core
+                    , mdmaster-plugins
+                    , mdmaster-app
+
+executable mdmaster
+    import:           warnings
+    hs-source-dirs:   app
+    main-is:          Main.hs
+    -- WARNING: do not add -M: at the limit the process
+    -- dies with "Heap exhausted", dropping every in-flight request and stored result.
+    ghc-options:      -threaded -rtsopts "-with-rtsopts=-N2 -c"
+    build-depends:    base
+                    , mdmaster-web
+
+test-suite mdmaster-web-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    ghc-options:      -threaded
+    other-modules:    Mdmaster.Web.ConfigSpec
+                      Mdmaster.Web.DemoSpec
+                      Mdmaster.Web.DocxOperationSpec
+                      Mdmaster.Web.E2ESpec
+                      Mdmaster.Web.HandlersSpec
+                      Mdmaster.Web.IdentitySpec
+                      Mdmaster.Web.LimitsSpec
+                      Mdmaster.Web.LogSpec
+                      Mdmaster.Web.NormalizeOperationSpec
+                      Mdmaster.Web.PathFieldSpec
+                      Mdmaster.Web.RoundTripSpec
+                      Mdmaster.Web.RunGateSpec
+                      Mdmaster.Web.RunLimitSpec
+                      Mdmaster.Web.ServerSpec
+                      Mdmaster.Web.ShutdownSpec
+                      Mdmaster.Web.StaticSpec
+                      Mdmaster.Web.StripCommentsOperationSpec
+                      Mdmaster.Web.UploadSpec
+                      Mdmaster.Web.View.DiffContextSpec
+                      Mdmaster.Web.View.DiffSpec
+                      Mdmaster.Web.View.FormSpec
+                      Mdmaster.Web.View.LayoutSpec
+                      Mdmaster.Web.View.ResultsSpec
+                      Mdmaster.Web.TestSupport
+
+    build-tool-depends: hspec-discover:hspec-discover
+    build-depends:    base
+                    , bytestring
+                    , containers
+                    , directory
+                    , filepath
+                    , text
+                    , time
+                    , unix
+                    , network
+                    , http-types
+                    , wai
+                    , wai-extra
+                    , warp
+                    , zip-archive   >=0.5  && <0.6
+                    , hspec
+                    , hspec-wai      >=0.12 && <0.13
+                    , lucid          >=2.11 && <2.12
+                    , mdmaster-core
+                    , mdmaster-plugins
+                    , pandoc-types   >=1.23 && <1.24
+                    , mdmaster-app
+                    , mdmaster-web

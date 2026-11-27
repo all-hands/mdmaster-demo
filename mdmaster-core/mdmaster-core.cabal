@@ -1,0 +1,44 @@
+cabal-version:      2.4
+name:               mdmaster-core
+version:            0.0.5
+synopsis:           Pure operation interface and Pandoc AST helpers for mdmaster
+license:            GPL-2.0-or-later
+build-type:         Simple
+
+common warnings
+    default-language: Haskell2010
+    default-extensions: OverloadedStrings
+
+library
+    import:           warnings
+    hs-source-dirs:   src
+    exposed-modules:  Mdmaster.Core.Options
+                      Mdmaster.Core.Operation
+                      Mdmaster.Core.Ast
+                      Mdmaster.Core.Marker
+                      Mdmaster.Core.CommentSpan
+                      Mdmaster.Core.DocxImage
+    build-depends:    base         >=4.20 && <4.21
+                    , deepseq
+                    , containers   >=0.6  && <0.8
+                    , text         >=2.0  && <2.2
+                    , pandoc-types >=1.23 && <1.24
+                    , pandoc       >=3.14 && <3.15
+
+test-suite mdmaster-core-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    other-modules:    Mdmaster.Core.OptionsSpec
+                      Mdmaster.Core.OperationSpec
+                      Mdmaster.Core.AstSpec
+                      Mdmaster.Core.MarkerSpec
+                      Mdmaster.Core.CommentSpanSpec
+    build-tool-depends: hspec-discover:hspec-discover
+    build-depends:    base
+                    , containers
+                    , text
+                    , pandoc-types
+                    , hspec      >=2.10 && <2.12
+                    , mdmaster-core

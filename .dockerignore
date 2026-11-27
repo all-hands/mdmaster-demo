@@ -1,0 +1,15 @@
+dist-newstyle
+.ghc.environment.*
+**/*.hi
+**/*.o
+
+.git
+.gitignore
+.github
+Dockerfile
+.dockerignore
+deploy
+scripts
+!scripts/collect-licence-texts.sh
+USER_GUIDE.md
+SECURITY.md

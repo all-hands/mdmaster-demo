@@ -1,0 +1,9 @@
+dist-newstyle/
+.ghc.environment.*
+*.hi
+*.o
+.stack-work/
+*.docx
+!**/test/fixtures/*.docx
+!mdmaster-web/static/demo/docx/*.docx
+.~lock.*#

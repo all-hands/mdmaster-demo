@@ -1,0 +1,55 @@
+[Unit]
+Description=mdmaster (Markdown operations in the browser), loopback behind nginx
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=localhost/mdmaster-demo:latest
+
+PublishPort=127.0.0.1:8965:8965
+
+# WARNING: The process refuses to start unless the store cap is at least 8 times
+# MDMASTER_MAX_BATCH_BYTES and at least 2 times
+# MDMASTER_MAX_DOCX_BATCH_UNCOMPRESSED_BYTES, so lower the store cap and the
+# batch caps below together.
+Environment=MDMASTER_MAX_STORE_BYTES=134217728
+Environment=MDMASTER_MAX_CONCURRENT_RUNS=2
+
+# WARNING: Raising either batch cap means raising the store cap with it (see the
+# two factors above), or the process refuses to start. Memory= is not checked by
+# the app: size it separately, with room for the store and the runs in flight. Keep client_max_body_size in
+# deploy/nginx-mdmaster.conf at or above the body ceiling this gives: the batch
+# cap plus 5 KiB per MDMASTER_MAX_FILES file plus 96.3 KiB.
+Environment=MDMASTER_MAX_BATCH_BYTES=16777216
+Environment=MDMASTER_MAX_DOCX_BATCH_UNCOMPRESSED_BYTES=67108864
+
+# KEEP: Where the footer's "Source (GPL-2.0-or-later)" link points: set this to the place
+# where the running version's corresponding source is offered (an absolute
+# http:// or https:// URL, checked at startup).
+#Environment=MDMASTER_SOURCE_URL=https://example.org/mdmaster/source
+
+# WARNING: Do not set an RTS -M below this limit: the process would die with
+# "Heap exhausted" instead of evicting.
+Memory=1g
+
+# INVARIANT: TimeoutStopSec in [Service] must stay above StopTimeout, so that
+# podman reaps the container before systemd gives up on the unit.
+StopTimeout=30
+
+# INVARIANT: keep this probe and the Dockerfile's HEALTHCHECK in step. podman
+# drops a HEALTHCHECK from an OCI-format image, so the probe is spelled out here.
+HealthCmd=bash -c 'exec 3<>/dev/tcp/127.0.0.1/8965 && printf "GET /healthz HTTP/1.0\r\n\r\n" >&3 && grep -qm1 "HTTP/1.[01] 200" <&3'
+HealthInterval=30s
+HealthTimeout=5s
+HealthStartPeriod=10s
+HealthRetries=3
+
+NoNewPrivileges=true
+
+[Service]
+TimeoutStopSec=35
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

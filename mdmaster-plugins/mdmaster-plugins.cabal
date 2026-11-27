@@ -1,0 +1,65 @@
+cabal-version:      2.4
+name:               mdmaster-plugins
+version:            0.0.5
+synopsis:           mdmaster operations
+license:            GPL-2.0-or-later
+build-type:         Simple
+
+common warnings
+    default-language: Haskell2010
+    default-extensions: OverloadedStrings
+
+library
+    import:           warnings
+    hs-source-dirs:   src
+    exposed-modules:  Mdmaster.Plugins.Registry
+                      Mdmaster.Plugins.Docx
+                      Mdmaster.Plugins.Docx.Collect
+                      Mdmaster.Plugins.Docx.Options
+                      Mdmaster.Plugins.Docx.Render
+                      Mdmaster.Plugins.Normalize
+                      Mdmaster.Plugins.Normalize.Options
+                      Mdmaster.Plugins.Normalize.Smart
+                      Mdmaster.Plugins.StripComments
+                      Mdmaster.Plugins.StripComments.Options
+                      Mdmaster.Plugins.Toc
+                      Mdmaster.Plugins.Toc.Options
+                      Mdmaster.Plugins.Toc.Anchor
+                      Mdmaster.Plugins.Toc.Render
+    build-depends:    base
+                    , containers
+                    , text
+                    , pandoc-types >=1.23 && <1.24
+                    , transformers >=0.5  && <0.7
+                    , mdmaster-core
+
+test-suite mdmaster-plugins-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    other-modules:    Mdmaster.Plugins.RegistrySpec
+                      Mdmaster.Plugins.DocxSpec
+                      Mdmaster.Plugins.Docx.CollectSpec
+                      Mdmaster.Plugins.Docx.Gen
+                      Mdmaster.Plugins.Docx.OptionsSpec
+                      Mdmaster.Plugins.Docx.RenderSpec
+                      Mdmaster.Plugins.NormalizeSpec
+                      Mdmaster.Plugins.Normalize.Gen
+                      Mdmaster.Plugins.Normalize.OptionsSpec
+                      Mdmaster.Plugins.StripComments.OptionsSpec
+                      Mdmaster.Plugins.StripCommentsSpec
+                      Mdmaster.Plugins.TocSpec
+                      Mdmaster.Plugins.Toc.AnchorSpec
+                      Mdmaster.Plugins.Toc.Gen
+                      Mdmaster.Plugins.Toc.OptionsSpec
+                      Mdmaster.Plugins.Toc.RenderSpec
+    build-tool-depends: hspec-discover:hspec-discover
+    build-depends:    base
+                    , containers
+                    , text
+                    , pandoc-types
+                    , hspec
+                    , QuickCheck
+                    , mdmaster-core
+                    , mdmaster-plugins

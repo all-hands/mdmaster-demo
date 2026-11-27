@@ -1,0 +1,82 @@
+cabal-version:      2.4
+name:               mdmaster-app
+version:            0.0.5
+synopsis:           mdmaster batch pipeline
+license:            GPL-2.0-or-later
+build-type:         Simple
+extra-source-files: test/fixtures/comments.docx
+                    test/fixtures/make-fixture.py
+                    test/corpus/*.md
+
+common warnings
+    default-language: Haskell2010
+    default-extensions: OverloadedStrings
+
+library
+    import:           warnings
+    hs-source-dirs:   src
+    exposed-modules:  Mdmaster.App.Diff
+                      Mdmaster.App.Docx
+                      Mdmaster.App.Docx.Admission
+                      Mdmaster.App.Docx.Archive
+                      Mdmaster.App.Docx.Comments
+                      Mdmaster.App.Docx.Media
+                      Mdmaster.App.FileStore
+                      Mdmaster.App.Markdown
+                      Mdmaster.App.Pipeline
+                      Mdmaster.App.Types
+                      Mdmaster.App.Zip
+                      Mdmaster.App.Zip.Manifest
+    build-depends:    base
+                    , deepseq
+                    , bytestring  >=0.11 && <0.13
+                    , containers
+                    , text        >=2.0
+                    , time        >=1.12 && <1.15
+                    , stm         >=2.5  && <2.6
+                    , filepath    >=1.4  && <1.6
+                    , Diff        >=0.4  && <2.1
+                    , zip-archive >=0.5  && <0.6
+                    , zlib        >=0.6  && <0.8
+                    , xml-conduit >=1.9  && <1.11
+                    -- WARNING: pinned to the pandoc 3.14 release series, the one
+                    -- tested: Mdmaster.App.Markdown embeds this release's
+                    -- default.commonmark verbatim and the goldens
+                    -- pin its writer output. Move it with a template check and a
+                    -- golden run, not on its own.
+                    , pandoc      >=3.14 && <3.15
+                    , pandoc-types >=1.23 && <1.24
+                    , mdmaster-core
+
+test-suite mdmaster-app-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    other-modules:    Mdmaster.App.DiffSpec
+                      Mdmaster.App.Docx.AdmissionSpec
+                      Mdmaster.App.Docx.ArchiveSpec
+                      Mdmaster.App.Docx.CommentsSpec
+                      Mdmaster.App.Docx.MediaSpec
+                      Mdmaster.App.DocxSpec
+                      Mdmaster.App.FileStoreSpec
+                      Mdmaster.App.GoldenSpec
+                      Mdmaster.App.MarkdownSpec
+                      Mdmaster.App.PipelineSpec
+                      Mdmaster.App.Zip.ManifestSpec
+                      Mdmaster.App.ZipSpec
+                      Mdmaster.App.TestSupport
+    build-tool-depends: hspec-discover:hspec-discover
+    build-depends:    base
+                    , bytestring
+                    , containers
+                    , directory  >=1.3 && <1.4
+                    , filepath   >=1.4 && <1.6
+                    , text
+                    , time
+                    , zip-archive
+                    , pandoc
+                    , pandoc-types
+                    , hspec
+                    , mdmaster-core
+                    , mdmaster-app

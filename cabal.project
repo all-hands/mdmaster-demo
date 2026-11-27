@@ -1,0 +1,22 @@
+packages:
+  mdmaster-core
+  mdmaster-plugins
+  mdmaster-app
+  mdmaster-web
+
+tests: True
+
+package mdmaster-core
+  ghc-options: -Wall -Werror
+
+package mdmaster-plugins
+  ghc-options: -Wall -Werror
+
+package mdmaster-app
+  ghc-options: -Wall -Werror
+
+package mdmaster-web
+  ghc-options: -Wall -Werror
+
+package pandoc
+  flags: -embed_data_files -http
